@@ -1,0 +1,75 @@
+import pulp
+
+# Define problem data
+N = 10750  # Total number of employees
+Np = 0.74 * N  # Number of employees working on-site in 2023
+Nh = (1 - 0.74) * N  # Number of employees working remotely in 2023
+fatturato_annuo = 896637000 # Annual revenue in 2023
+
+max_productivity = 1.36
+p_perc = max_productivity / max_productivity # Productivity on-site per employee
+h_perc = 1.08 / max_productivity # Productivity remote per employee
+
+# Calculate costant z and productivities
+z = fatturato_annuo / (p_perc * Np + h_perc * Nh)
+p = z * p_perc  # Productivity on-site per employee
+h = z * h_perc  # Productivity remote per employee
+
+carbon_tax = 16953  # Annual carbon tax
+u = 100  # Number of workstations per office
+affitto_per_ufficio = 250 * u * 12  # Annual office rent
+
+Nf = 1640 # Number of employees with children under 14 or fragile conditions
+Ns = 2301  # Minimum number of employees that must be on-site
+
+# Define areas and respective constraints
+areas = {
+    "DNA": (0, 4300, 0.60),  # DNA area: from employee 0 to 4299, 60% must be on-site
+    "AUTO": (4300, 7525, 0.45),  # AUTO area: from employee 4300 to 7524, 45% must be on-site
+    "VITA": (7525, 9675, 0.30),  # VITA area: from employee 7525 to 9674, 30% must be on-site
+    "CONTABILITA": (9675, 10750, 0.15)  # CONTABILITA area: from employee 9675 to 10749, 15% must be on-site
+}
+
+# Create optimization problem
+prob = pulp.LpProblem("Scheduling_Optimization", pulp.LpMaximize)
+
+# Define decision variables
+x = pulp.LpVariable.dicts("x", range(N), cat='Binary')
+num_offices = pulp.LpVariable("num_offices", lowBound=0, cat='Integer')
+
+# Define the objective function
+total_productivity = pulp.lpSum([p * x[i] + h * (1 - x[i]) for i in range(N)])
+total_cost = pulp.lpSum([x[i] for i in range(N)]) * carbon_tax + num_offices * affitto_per_ufficio
+prob += total_productivity - total_cost
+
+# Constraints
+
+# Employees with children under 14 or fragile conditions work always remotely
+prob += pulp.lpSum([1 - x[i] for i in range(Nf)]) >= Nf
+
+# Minimum number of employees that must be on-site
+prob += pulp.lpSum([x[i] for i in range(N)]) >= Ns
+
+# Constraint to ensure num_offices is correctly calculated
+prob += pulp.lpSum([x[i] for i in range(N)]) <= num_offices * u
+
+# Minimum number of employees in each area that must be on-site
+for area, (start, end, ratio) in areas.items():
+    prob += pulp.lpSum([x[i] for i in range(start, end)]) >= ratio * (end - start)
+
+# Solve the problem
+prob.solve()
+
+# Print solution status
+print("Solution status:", pulp.LpStatus[prob.status])
+
+# Print the number of employees working on-site
+num_in_sede = sum([x[i].varValue for i in range(N)])
+print("Number of employees on-site:", num_in_sede)
+print("Number of employees remote:", N - num_in_sede)
+print("Number of offices:", num_offices.varValue)
+
+# Print the total profit, cost and productivity  
+print("Profit:", pulp.value(prob.objective))
+print("Total cost:", pulp.value(total_cost))
+print("Total productivity:", pulp.value(total_productivity))

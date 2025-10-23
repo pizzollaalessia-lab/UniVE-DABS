@@ -1,0 +1,17 @@
+﻿Var_description;Scenario 0;Scenario 1
+Total number of employees;10750;10750
+Number of employees working on-site in 2023;7955;7955
+Number of employees working remotely in 2023;2795;2795
+Annual revenue in 2023;896637000;896637000
+Maximum productivity;1.36;1.36
+Productivity rate on-site per employee;1.36;1.36
+Productivity rate remote per employee;1.08;1.11
+Annual carbon tax per employee;16953;16953
+Number of workstations per office;100;100
+Annual office rent per office;300000;300000
+Number of employees with children under 14 or fragile conditions;1640;1640
+Minimum number of employees that must be on-site;2301;2301
+Area DNA (60% on-site);0-4299;0-4299
+Area AUTO (45% on-site);4300-7524;4300-7524
+Area VITA (30% on-site);7525-9674;7525-9674
+Area CONTABILITA (15% on-site);9675-10749;9675-10749

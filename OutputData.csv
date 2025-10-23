@@ -1,0 +1,16 @@
+﻿Variable;Scenario 0;Scenario 1
+Solution State;Optimal;Optimal
+On-site workers;4900;5913
+Remote workers;5850;4837
+Site number;49;60
+Profits;743439019,4;745513732,2
+Total costs;97769700,00;118243089
+Total productivity;841208719,40;863756821,2
+On-site workers DNA;2580;2660
+Remote workers DNA;1720;1640
+On-site workers AUTO;1452;1533
+Remote workers AUTO;1773;1692
+On-site workers VITA;645;645
+Remote workers VITA;1505;1505
+On-site workers CONTABILITA;223;1075
+Remote workers CONTABILITA;852;0

@@ -1,0 +1,68 @@
+import pulp
+
+# Definire i dati del problema
+N = 10750  # Numero totale di dipendenti
+Np = 0.74 * N  # Numero di dipendenti che lavorano in sede nel 2023
+Nh = (1 - 0.74) * N  # Numero di dipendenti che lavorano da remoto nel 2023
+fatturato_annuo = 896637000 # Fatturato annuo nel 2023
+
+max_productivity = 1.36
+p_perc = max_productivity / max_productivity # Produttività in sede per dipendente
+h_perc = 1.11 / max_productivity # Produttività aggiornata da remoto per dipendente
+
+# Calcolare la costante z e le produttività
+z = fatturato_annuo / (p_perc * Np + h_perc * Nh)
+p = z * p_perc  # Produttività in sede per dipendente
+h = z * h_perc  # Produttività aggiornata da remoto per dipendente
+
+carbon_tax = 16953  # Tassa annuale sul carbonio
+u = 100  # Numero di postazioni di lavoro per ufficio
+affitto_per_ufficio = 250 * u * 12  # Affitto annuale dell'ufficio
+
+Nf = 1640 # Numero di dipendenti con figli sotto i 14 anni o in condizioni fragili
+Ns = 2301  # Numero minimo di dipendenti che devono essere in sede
+
+# Creare il problema di ottimizzazione
+prob = pulp.LpProblem("Ottimizzazione_Schedulazione", pulp.LpMaximize)
+
+# Definire le variabili decisionali
+x = pulp.LpVariable.dicts("x", range(N), cat='Binary')
+num_offices = pulp.LpVariable("num_offices", lowBound=0, cat='Integer')
+
+# x[i] = 1 se il dipendente i lavora in sede, 0 altrimenti
+
+# Definire la funzione obiettivo
+total_productivity = pulp.lpSum([p * x[i] + h * (1 - x[i]) for i in range(N)])
+total_cost = pulp.lpSum([x[i] for i in range(N)]) * carbon_tax  + num_offices * affitto_per_ufficio
+prob += total_productivity - total_cost
+
+# Vincoli
+
+# I dipendenti con figli sotto i 14 anni o in condizioni fragili lavorano sempre da remoto
+prob += pulp.lpSum([1 - x[i] for i in range(Nf)]) == Nf
+
+# Numero minimo di dipendenti che devono essere in sede
+prob += pulp.lpSum([x[i] for i in range(N)]) >= 0.45 * N
+
+# Numero massimo di dipendenti che possono essere in sede
+prob += pulp.lpSum([x[i] for i in range(N)]) <= 0.55 * N
+
+# Vincolo per assicurare che num_offices sia calcolato correttamente
+prob += pulp.lpSum([x[i] for i in range(N)]) <= num_offices * u
+
+# Risolvere il problema
+prob.solve()
+
+# Stampare lo stato della soluzione
+print("Stato della soluzione:", pulp.LpStatus[prob.status])
+
+# Stampare il numero di dipendenti che lavorano in sede
+num_in_sede = sum([x[i].varValue for i in range(N)])
+print("Numero di dipendenti in sede:", num_in_sede)
+print("Numero di dipendenti da remoto:", N - num_in_sede)
+print("Numero di uffici:", num_offices.varValue)
+
+# Stampare il profitto totale, il costo e la produttività
+print("Profitto:", pulp.value(prob.objective))
+print("Costo totale:", pulp.value(total_cost))
+print("Produttività totale:", pulp.value(total_productivity))
